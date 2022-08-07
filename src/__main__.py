@@ -6,7 +6,9 @@ import sys
 
 from __init__ import JSON_PATH
 from auth import Authenticator
+from config import ConfigObj
 from help import Helper
+from post import Post
 
 
 def main():
@@ -46,9 +48,55 @@ def main():
                     current_config.get('access_token'))
         else:
             print(f"No config file found at: {JSON_PATH}")
+    elif len(sys.argv) >= 3 and sys.argv[1].lower() == "post":
+        post_content = ""
+        if sys.argv[2] == "--":
+            print("Reading post content from STDIN.")
+            post_content = sys.stdin.read()
+        else:
+            if os.path.isfile(sys.argv[2]):
+                with open(sys.argv[2], "r") as file:
+                    post_content = file.read()
+            else:
+                print(f"Unable to find a file at given path of: {sys.argv[3]}")
 
+        # Check if a collection was specified.
+        collection = None
+        if len(sys.argv) >= 4:
+            collection = sys.argv[3]
+
+        # Check if a title was specified.
+        post_content_list = post_content.split('\n')
+        post_title = None
+        if post_content_list[0].startswith('#'):
+            post_title = post_content_list[0].replace("#", "").strip()
+            post_content_list.remove(post_content_list[0])
+            post_content = '\n'.join(post_content_list)
+
+        # Ensure we have information to connect to Write Freely.
+        current_conf = ConfigObj()
+        current_conf.load()
+
+        # Create a post object and validate the collection if one was provided.
+        current_post = Post(
+            post_content,
+            current_conf.instance,
+            current_conf.access_token,
+            collection=collection,
+            title=post_title)
+
+        if collection != "":
+            current_post.check_collection()
+
+        # Make the post.
+        post_id = current_post.create_post()
+        print(f"Successfully created post with ID: {post_id}")
+
+    elif len(sys.argv) < 4 and "post" in sys.argv:
+        print("Not enough arguments to make a post!")
+        help_obj.help_post()
     else:
-        print("Something else was entered.")
+        print("Entered arguments don't match known values. Run \"writepyly help\" for instructions.")
         
 
 if __name__ == "__main__":

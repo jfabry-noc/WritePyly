@@ -41,3 +41,16 @@ class Helper:
 		print("\n\twritepyly logout")
 		print("\nThe configuration file is located at:")
 		print("\n\t~/.config/writepyly/config.json\n")
+
+	def help_post(self):
+		print("Posting requires the content to post. Content may be specified")
+		print("either via a path to the Markdown file or pipe through STDIN.")
+		print("File paths can either be full or relative.")
+		print("\nOptionally, you may also include the collection (or blog) you")
+		print("wish to post the content to.")
+		print("\nThis example shows posting via a Markdown file path to the")
+		print("blog named 'api-tester':")
+		print("\n\twritepyly post ../sample_data/test_post.md api-tester")
+		print("\nThis example shows the same as above, but the post content")
+		print("is submitted via STDIN:")
+		print("\n\tcat ../sample_data/test_post.md | writepyly post -- api-tester\n")
