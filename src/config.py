@@ -44,9 +44,7 @@ class ConfigObj:
 			access_token = ""
 			with open(JSON_PATH, "r") as file:
 				configuration = json.load(file)
-				print(f"Adding instance to the config: {configuration.get('instance')}")
 				self.instance = configuration.get("instance")
-				print(f"Adding access token to the config: {configuration.get('access_token')}")
 				self.access_token = configuration.get("access_token")
 
 			if self.instance is None:

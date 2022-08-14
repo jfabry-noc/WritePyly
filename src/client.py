@@ -74,3 +74,27 @@ class WriteFreely:
 		sorted_posts = sorted(post_list, key = lambda p: p['created'], reverse=True)
 
 		return sorted_posts
+
+	def delete_post(self, post_id: str):
+		"""
+		Deletes a post via the post ID. Most commonly retrieved from running the
+		'get' command.
+		"""
+		delete_url = f"https://{self.instance}/api/posts/{post_id}"
+		try:
+			deletion_response = requests.delete(
+				delete_url,
+				headers={
+				"Content-Type": "application/json",
+				"Authorization": f"Token {self.access_token}"
+				})
+
+			# Validate the deletion was successful.
+			if deletion_response.status_code == 204:
+				print(f"Successfully deleted post: {post_id}")
+			else:
+				print(f"Failed to delete post {post_id} with status code: {deletion_response.status_code}")
+		except Exception as e:
+			print(f"Failed to delete post with ID: {post_id}")
+			print(f"Error was: {e}")
+			sys.exit(1)

@@ -33,7 +33,7 @@ def print_posts(all_posts: list, page_size: int = 0):
 
         # Check if the user should be prompted for additional paging.
         if page_size != 0 and counter % page_size == 0:
-            print("Press Enter to continue or 'q' to stop showing pages.")
+            print("Press 'q' to stop showing pages or anything else to continue.")
             print("")
             user_selection = getch.getch()
             if user_selection.lower() == "q":
@@ -60,6 +60,8 @@ def main():
         help_obj.help_post()
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "get":
         help_obj.help_get()
+    elif len(sys.argv) >=3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "delete":
+        help_obj.help_delete()
     elif len(sys.argv) >= 2 and sys.argv[1].lower() == "login":
         print("Attempting authentication.")
         auth_obj = Authenticator()
@@ -169,6 +171,17 @@ def main():
 
     elif len(sys.argv) < 3 and "get" in sys.argv:
         print("Must specify a collection with 'get'. Please include the collection name.")
+    elif len(sys.argv) >= 3 and "delete" in sys.argv:
+        current_config = ConfigObj()
+        current_config.load()
+
+        # Create the client and attempt to delete the post.
+        write_client = WriteFreely(
+            current_config.instance,
+            current_config.access_token)
+        write_client.delete_post(sys.argv[2])
+    elif len(sys.argv) < 3 and "delete" in sys.argv:
+        print("Must specify a post ID with 'delete'. Run \"writepyly help delete\" for more details.")
     else:
         print("Entered arguments don't match known values. Run \"writepyly help\" for instructions.")
         

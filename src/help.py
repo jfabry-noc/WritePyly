@@ -67,3 +67,12 @@ class Helper:
 		print("\n\twritepyly get 10\n")
 		print("Omitting the page count will result in pages of 10 posts. The main")
 		print("use case is to use this to get the ID of a post you wish to delete.")
+
+	def help_delete(self):
+		print("Requires a post ID to be given as a parameter after the delete")
+		print("command:")
+		print("\n\twritepyly delete {post_id}\n")
+		print("Post IDs can be obtained from:")
+		print("\n\twritepyly get\n")
+		print("For additional information see:")
+		print("\n\twritepyly help get")
