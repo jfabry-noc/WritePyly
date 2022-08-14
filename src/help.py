@@ -9,7 +9,7 @@ class Helper:
 	"""
 	def help_empty(self):
 		print("writepyly - CLI tool for posting to a Write Freely instance.")
-		print("\n\twritepyly help | login | logout | post")
+		print("\n\twritepyly help | login | logout | post | get | delete")
 		print("\nHelp can be combined with other commands for additional detail:")
 		print("\n\twritepyly help login\n")
 
