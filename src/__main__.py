@@ -4,12 +4,42 @@ import json
 import os
 import sys
 
+import getch
+
 from __init__ import JSON_PATH
 from auth import Authenticator
+from client import WriteFreely
 from config import ConfigObj
 from help import Helper
 from post import Post
 
+def print_posts(all_posts: list, page_size: int = 0):
+    """
+    Prints posts by showing their title, publication date, and their ID. If a
+    page size is specified, the user will be prompted to enter a key if they want
+    to continue rendering pages. The idea is that users would leverage this to
+    get back a list of posts and then take some action upon one of them in another
+    command leveraging the ID.
+    """
+    counter = 0
+    for single_post in all_posts:
+        # Increment the counter.
+        counter += 1
+
+        # Print the current post to STDOUT.
+        print(f"Title:   {single_post.get('title')}")
+        print(f"Created: {single_post.get('created')}")
+        print(f"ID:      {single_post.get('id')}\n")
+
+        # Check if the user should be prompted for additional paging.
+        if page_size != 0 and counter % page_size == 0:
+            print("Press Enter to continue or 'q' to stop showing pages.")
+            print("")
+            user_selection = getch.getch()
+            if user_selection.lower() == "q":
+                break
+            else:
+                continue
 
 def main():
     # Define the command line arguments.
@@ -28,6 +58,8 @@ def main():
         help_obj.help_logout()
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "post":
         help_obj.help_post()
+    elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "get":
+        help_obj.help_get()
     elif len(sys.argv) >= 2 and sys.argv[1].lower() == "login":
         print("Attempting authentication.")
         auth_obj = Authenticator()
@@ -104,6 +136,39 @@ def main():
     elif len(sys.argv) < 4 and "post" in sys.argv:
         print("Not enough arguments to make a post!")
         help_obj.help_post()
+    elif len(sys.argv) >= 3 and "get" in sys.argv:
+        page_count = 0
+        if len(sys.argv) > 3:
+            try:
+                page_count = int(sys.argv[3])
+            except ValueError:
+                print("Must specify an integer for the page size! Run:")
+                print("\n\t writepyly help get\n")
+                print("For more details.")
+                sys.exit(1)
+            except Exception as e:
+                print(f"Unknown error processing page size: {e}")
+                sys.exit(1)
+        # Load the current configuration.
+        current_config = ConfigObj()
+        current_config.load()
+
+        # Create the client object and get the posts.
+        write_client = WriteFreely(
+            current_config.instance,
+            current_config.access_token,
+            collection=sys.argv[2])
+        write_client.check_collection()
+        all_posts = write_client.get_posts()
+        
+        # Call the function to display the post content.
+        if page_count != 0:
+            print_posts(all_posts, page_count)
+        else:
+            print_posts(all_posts)
+
+    elif len(sys.argv) < 3 and "get" in sys.argv:
+        print("Must specify a collection with 'get'. Please include the collection name.")
     else:
         print("Entered arguments don't match known values. Run \"writepyly help\" for instructions.")
         

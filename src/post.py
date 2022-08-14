@@ -2,8 +2,10 @@ import json
 import requests
 import sys
 
+from client import WriteFreely
 
-class Post:
+
+class Post(WriteFreely):
 	def __init__(self, post_content: str, instance: str, access_token: str, **kwargs):
 		self.post_content = post_content
 		self.instance = instance
@@ -14,29 +16,6 @@ class Post:
 			self.title = kwargs.get('title')
 		else:
 			self.title = None
-
-	def check_collection(self):
-		"""
-		Checks for the presence of a collection to assert that a specified
-		collection is valid.
-		"""
-		if self.collection:
-			try:
-				collection_url = f"https://{self.instance}/api/collections/{self.collection}"
-				# Get the user's collections and validate that this is one of them.
-				collection_response = requests.get(
-					url=collection_url,
-					headers={"Content-Type": "application/json",
-						"Authorization": f"Token {self.access_token}"})
-
-				if collection_response.status_code != 200:
-					print(f"Error: Specified collection of {self.collection} is not valid!")
-					print(f"Are you sure you have the correct name for your collection?")
-					sys.exit(1)
-			except Exception as e:
-				print(f"Error attempting to check validity of collection: {self.collection}")
-				print(f"Error was: {e}")
-				sys.exit(1)
 
 	def create_post(self) -> str:
 		"""

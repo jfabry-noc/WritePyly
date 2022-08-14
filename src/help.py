@@ -54,3 +54,16 @@ class Helper:
 		print("\nThis example shows the same as above, but the post content")
 		print("is submitted via STDIN:")
 		print("\n\tcat ../sample_data/test_post.md | writepyly post -- api-tester\n")
+
+	def help_get(self):
+		print("Returns the title, post date, and ID of your posts at the specified")
+		print("collection. ONLY collections can be queried for posts, so the")
+		print("collection name must be included. Optionally, you can include the")
+		print("number of posts per page:")
+		print("\n\twritepyly get {collection} {number_of_posts}\n")
+		print("When using paging, you will be prompted if you want to continue")
+		print("receiving additional posts or if you want to stop. For example, ")
+		print("the following will give posts in 5 page increments:")
+		print("\n\twritepyly get 10\n")
+		print("Omitting the page count will result in pages of 10 posts. The main")
+		print("use case is to use this to get the ID of a post you wish to delete.")
