@@ -26,6 +26,8 @@ def main():
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "logout":
         print("Writing help logout because it was requested.")
         help_obj.help_logout()
+    elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "post":
+        help_obj.help_post()
     elif len(sys.argv) >= 2 and sys.argv[1].lower() == "login":
         print("Attempting authentication.")
         auth_obj = Authenticator()
@@ -43,9 +45,16 @@ def main():
 
             if current_config != {} and current_config.get('instance') and current_config.get('access_token'):
                 auth_obj = Authenticator()
-                auth_obj.remove_login(
-                    current_config.get('instance'),
-                    current_config.get('access_token'))
+                try:
+                    auth_obj.remove_login(
+                        current_config['instance'],
+                        current_config['access_token'])
+                except KeyError as e:
+                    print("Missing either the instance or access token to log out. Does the config file still exist at: ~/config/writepyly/config.json")
+                    sys.exit(1)
+                except Exception as e:
+                    print(f"Failed to logout with error: {e}")
+                    sys.exit(1)
         else:
             print(f"No config file found at: {JSON_PATH}")
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "post":

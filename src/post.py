@@ -12,6 +12,8 @@ class Post:
 			self.collection = kwargs.get('collection')
 		if kwargs.get('title'):
 			self.title = kwargs.get('title')
+		else:
+			self.title = None
 
 	def check_collection(self):
 		"""
@@ -52,7 +54,7 @@ class Post:
 
 		# Put together the post DTO. This will need to change a LOT.
 		post_dict = {"body": self.post_content}
-		if self.title != "":
+		if self.title is not None and self.title != "":
 			post_dict['title'] = self.title
 		post_dto = json.dumps(post_dict)
 		print(f"Posting: {post_dto}")
