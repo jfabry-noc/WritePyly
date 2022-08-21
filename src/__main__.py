@@ -98,6 +98,7 @@ def main():
                     post_content = file.read()
             else:
                 print(f"Unable to find a file at given path of: {sys.argv[3]}")
+                sys.exit(1)
 
         # Check if a collection was specified.
         collection = None
