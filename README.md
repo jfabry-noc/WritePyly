@@ -67,7 +67,7 @@ writepyly help post
 
 ### `get`
 
-This retrieves all of the posts from a collection and displays the following:
+This retrieves the 10 most recent posts from a collection and displays:
 
 - title
 - creation date
@@ -79,13 +79,7 @@ If the post has an actual title, that will be displayed. Otherwise, the first 50
 writepyly get api-tester
 ```
 
-By default, this will return **all** posts with the associated collection. _Note_ that only collections can be queried in this way, so a collection is mandatory. If you want to receive pages of posts, pass an integer as an additional parameter. For example, to receive pages of 10 posts, execute:
-
-```shell
-writepyly get api-tester 10
-```
-
-After each page, the user will be prompted to either continue to the next page or to press `q` (case insensitive) to stop.
+As the API will only give back the most recent 10, there are no other options for the number of posts, paging, etc.
 
 ### `login`
 
