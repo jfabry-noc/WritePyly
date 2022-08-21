@@ -56,6 +56,9 @@ def main():
     elif len(sys.argv) >=3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "delete":
         help_obj.help_delete()
     elif len(sys.argv) >= 2 and sys.argv[1].lower() == "login":
+        if len(sys.argv) < 5:
+            print("Not enough arguments! See the following for more details:\n\nwritepyly help login\n")
+            sys.exit(1)
         print("Attempting authentication.")
         auth_obj = Authenticator()
         auth_obj.supply_credentials(sys.argv[4], sys.argv[2], sys.argv[3])
