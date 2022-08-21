@@ -4,12 +4,11 @@ import json
 import os
 import sys
 
-import getch
-
 from __init__ import JSON_PATH
 from auth import Authenticator
 from client import WriteFreely
 from config import ConfigObj
+from console import WriteConsole
 from help import Helper
 from post import Post
 
@@ -38,16 +37,13 @@ def main():
     # Define the command line arguments.
     help_obj = Helper()
     if len(sys.argv) == 1:
-        print("Writing help because there were no arguments.")
-        help_obj.help_empty()
+        # Launch the interactive TUI application.
+        WriteConsole()
     elif len(sys.argv) == 2 and sys.argv[1].lower() == "help":
-        print("Writing help since there is a single argument for help.")
         help_obj.help_empty()
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "login":
-        print("Writing help login because it was requested.")
         help_obj.help_login()
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "logout":
-        print("Writing help logout because it was requested.")
         help_obj.help_logout()
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "help" and sys.argv[2].lower() == "post":
         help_obj.help_post()

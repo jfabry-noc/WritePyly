@@ -1,6 +1,7 @@
 import requests
 import sys
 
+
 class WriteFreely:
     def __init__(self, instance: str, access_token: str, **kwargs):
         self.instance = instance
