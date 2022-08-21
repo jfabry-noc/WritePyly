@@ -67,3 +67,4 @@ class Authenticator():
                 sys.exit(1)
         except Exception as e:
             print(f"ERROR: Unable to authenticate with error: {e}")
+

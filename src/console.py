@@ -2,6 +2,8 @@ import sys
 
 from rich.console import Console
 
+from auth import Authenticator
+
 
 class WriteConsole:
     # https://rich.readthedocs.io/en/latest/console.html
@@ -34,6 +36,12 @@ class WriteConsole:
 
         return int_value
 
+    def authenticate(self):
+        """
+        Authenticates the user, either creating or overwriting the local
+        configuration file.
+        """
+
     def print_greeting(self):
         """
         Prints a basic greeting to the user.
@@ -47,25 +55,43 @@ class WriteConsole:
         Prints the main menu to the user and collects input for what the user
         would like to do.
         """
+        options = [
+            "Login",
+            "Logout",
+            "Create post",
+            "Get 10 most recent posts",
+            "Delete a post",
+            "Quit"]
+        counter = 0
         while True:
-            self.console.print("[bold]\nWhat would you like to do?")
-            self.console.print("[bold]1. [/bold]Show help")
-            self.console.print("[bold]2. [/bold]Login")
-            self.console.print("[bold]3. [/bold]Logout")
-            self.console.print("[bold]4. [/bold]Create post")
-            self.console.print("[bold]5. [/bold]Get 10 most recent posts")
-            self.console.print("[bold]6. [/bold]Delete a post")
-            self.console.print("[bold]7. [/bold]Quit")
+            for option in options:
+                counter += 1
+                self.console.print(f"[bold]{counter}. [/bold]{option}")
             selection = self.console.input("> ")
 
             # Check if it's valid.
-            int_value = self.process_menu_input(selection, 7)
+            int_value = self.process_menu_input(selection, len(options))
             if int_value == 0:
                 self.console.print(f"[bold red]{selection} is not valid!")
                 continue
             else:
                 # Call whatever method is required by the user's selection.
-                if int_value == 7:
+                if int_value == 1:
+                    # Initiate a new login.
+                    pass
+                elif int_value == 2:
+                    # Logout from the current session.
+                    pass
+                elif int_value == 3:
+                    # Create a new post.
+                    pass
+                elif int_value == 4:
+                    # Show the 10 most recent posts.
+                    pass
+                elif int_value == 5:
+                    # Delete a post. Maybe call the 10 most recent automatically?
+                    pass
+                elif int_value == 6:
                     self.console.print("[bold purple]Goodbye!")
                     sys.exit(0)
 
