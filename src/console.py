@@ -2,14 +2,34 @@ import sys
 
 from rich.console import Console
 
-from auth import Authenticator
+from config import ConfigObj
+from client import WriteFreely
 
 
 class WriteConsole:
     # https://rich.readthedocs.io/en/latest/console.html
     def __init__(self):
         self.console = Console()
+        self.current_config = ConfigObj()
+        self.client = None
+        self.collection = ""
         self.print_greeting()
+
+    def enter_to_continue(self) -> None:
+        """
+        Prompts the user to hit 'Enter' to continue so as to draw their attention
+        to what was written to the screen prior to repeating the menu.
+        """
+        self.console.print("Hit [bold purple]Enter[/bold purple] to continue...")
+        input("> ")
+
+    def print_missing_config(self) -> None:
+        """
+        Prints a notice that the configuration is missing and prompts the user
+        to attempt to run the 'login' command.
+        """
+        self.console.print("Try running [bold purple]login[/bold]")
+        self.enter_to_continue()
 
     def process_menu_input(self, user_input: str, max_value: int):
         """
@@ -17,7 +37,7 @@ class WriteConsole:
         be converted to an integer and is a valid option. All ranges are assumed
         to start at 1.
 
-        Parameters:
+        Args:
             user_input (str): Menu option entered by the user.
             max_value (int): The maximum value that can be entered.
 
@@ -35,6 +55,51 @@ class WriteConsole:
             pass
 
         return int_value
+
+    def check_collection(self) -> bool:
+        """
+        Validates if a collection has been specified or if one is needed. Prints
+        a message to the user with what option to select to fix the issue if
+        the collection is absent.
+
+        Returns:
+            bool: Indicating if there is a collection specified.
+        """
+        if self.collection == "":
+            self.console.print("No [bold purple]collection[/bold purple] has been specified! Use option 3 first!")
+            self.enter_to_continue()
+            return False
+        else:
+            return True
+
+    def check_client(self) -> bool:
+        """
+        Determines if a client has already been instantiated. If not, it creates
+        the client, including loading the configuration and the checks which
+        go along with that process.
+
+        Returns:
+            bool: Indicates if there's currently a client or not.
+        """
+        if self.client is None:
+            # Load the configuration.
+            if not self.current_config.load():
+                self.print_missing_config()
+                return False
+            else:
+                # Create the client.
+                self.client = WriteFreely(
+                    self.current_config.instance,
+                    self.current_config.access_token,
+                    collection=self.collection
+                )
+
+                # Ensure the passed collection was valid.
+                if not self.client.check_collection():
+                    self.console.print("Invalid collection! Specify a new one with option 3.", style="bold red")
+                    self.enter_to_continue()
+                    return False
+        return True
 
     def authenticate(self):
         """
@@ -58,12 +123,13 @@ class WriteConsole:
         options = [
             "Login",
             "Logout",
+            "Define collection",
             "Create post",
             "Get 10 most recent posts",
             "Delete a post",
             "Quit"]
-        counter = 0
         while True:
+            counter = 0
             for option in options:
                 counter += 1
                 self.console.print(f"[bold]{counter}. [/bold]{option}")
@@ -83,15 +149,26 @@ class WriteConsole:
                     # Logout from the current session.
                     pass
                 elif int_value == 3:
+                    # Define the collection.
+                    self.console.print("Enter the name of the current [bold purple]collection[/bold purple]:")
+                    self.collection = input("> ")
+                    self.console.print(f"Saved collection of: [bold purple]{self.collection}[/bold purple]")
+                    self.enter_to_continue()
+                elif int_value == 4:
                     # Create a new post.
                     pass
-                elif int_value == 4:
-                    # Show the 10 most recent posts.
-                    pass
                 elif int_value == 5:
+                    # Show the 10 most recent posts.
+                    # Check that there's a collection.
+                    if self.check_collection() and self.check_client():
+                        if self.client is not None:
+                            self.client.get_posts()
+                        else:
+                            self.console.print("We should never get here! Try logging in again...")
+                        self.enter_to_continue()
+                elif int_value == 6:
                     # Delete a post. Maybe call the 10 most recent automatically?
                     pass
-                elif int_value == 6:
+                elif int_value == 7:
                     self.console.print("[bold purple]Goodbye!")
                     sys.exit(0)
-

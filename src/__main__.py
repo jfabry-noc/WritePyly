@@ -4,6 +4,8 @@ import json
 import os
 import sys
 
+from rich.console import Console
+
 from __init__ import JSON_PATH
 from auth import Authenticator
 from client import WriteFreely
@@ -12,11 +14,22 @@ from console import WriteConsole
 from help import Helper
 from post import Post
 
+def exit_with_login_message(console: Console) -> None:
+    """
+    Prints a message that loading the configuration failed and prompting the user
+    to run the login command.
+
+    Args:
+        console (Console): rich `Console` object for writing to stdout.
+    """
+    console.print("Running [bold purple]writepyly login[/bold purple] should resolve this.")
+    sys.exit(1)
+
 def string_to_int(input_value: str) -> int:
     """
     Attempts to convert a string to an integer and returns the integer value.
 
-    Parameters:
+    Args:
         input_value (str): String to convert.
 
     Returns:
@@ -34,6 +47,9 @@ def string_to_int(input_value: str) -> int:
         sys.exit(1)
 
 def main():
+    # Create a console object.
+    console = Console()
+
     # Define the command line arguments.
     help_obj = Helper()
     if len(sys.argv) == 1:
@@ -53,9 +69,9 @@ def main():
         help_obj.help_delete()
     elif len(sys.argv) >= 2 and sys.argv[1].lower() == "login":
         if len(sys.argv) < 5:
-            print("Not enough arguments! See the following for more details:\n\nwritepyly help login\n")
+            console.print("Not enough arguments! See the following for more details:\n\n[bold]writepyly help login[/bold]\n", style="red")
             sys.exit(1)
-        print("Attempting authentication.")
+        console.print("Attempting authentication.")
         auth_obj = Authenticator()
         auth_obj.supply_credentials(sys.argv[4], sys.argv[2], sys.argv[3])
         auth_obj.new_login()
@@ -67,7 +83,7 @@ def main():
                 with open(JSON_PATH, "r") as config_file:
                     current_config = json.load(config_file)
             except Exception as e:
-                print(f"ERROR: Unable to read {JSON_PATH} with error: {e}")
+                console.print(f"ERROR: Unable to read {JSON_PATH} with error: {e}", style="bold red")
 
             if current_config != {} and current_config.get('instance') and current_config.get('access_token'):
                 auth_obj = Authenticator()
@@ -76,24 +92,24 @@ def main():
                         current_config['instance'],
                         current_config['access_token'])
                 except KeyError as e:
-                    print("Missing either the instance or access token to log out. Does the config file still exist at: ~/config/writepyly/config.json")
+                    console.print("Missing either the instance or access token to log out. Does the config file still exist at: ~/config/writepyly/config.json", style="bold red")
                     sys.exit(1)
                 except Exception as e:
-                    print(f"Failed to logout with error: {e}")
+                    console.print(f"Failed to logout with error: {e}", style="bold red")
                     sys.exit(1)
         else:
-            print(f"No config file found at: {JSON_PATH}")
+            console.print(f"No config file found at: {JSON_PATH}")
     elif len(sys.argv) >= 3 and sys.argv[1].lower() == "post":
         post_content = ""
         if sys.argv[2] == "--":
-            print("Reading post content from STDIN.")
+            console.print("Reading post content from STDIN.")
             post_content = sys.stdin.read()
         else:
             if os.path.isfile(sys.argv[2]):
                 with open(sys.argv[2], "r") as file:
                     post_content = file.read()
             else:
-                print(f"Unable to find a file at given path of: {sys.argv[3]}")
+                console.print(f"Unable to find a file at given path of: {sys.argv[3]}", style="bold red")
                 sys.exit(1)
 
         # Check if a collection was specified.
@@ -111,7 +127,8 @@ def main():
 
         # Ensure we have information to connect to Write Freely.
         current_conf = ConfigObj()
-        current_conf.load()
+        if not current_conf.load():
+            exit_with_login_message(console)
 
         # Create a post object and validate the collection if one was provided.
         current_post = Post(
@@ -126,29 +143,32 @@ def main():
 
         # Make the post.
         post_id = current_post.create_post()
-        print(f"Successfully created post with ID: {post_id}")
+        console.print(f"Successfully created post with ID: [bold purple]{post_id}[/bold purple]")
 
     elif len(sys.argv) < 4 and "post" in sys.argv:
-        print("Not enough arguments to make a post!")
+        console.print("Not enough arguments to make a post!", style="bold red")
         help_obj.help_post()
     elif len(sys.argv) >= 3 and "get" in sys.argv:
         # Load the configuration.
         current_config = ConfigObj()
-        current_config.load()
+        if not current_config.load():
+            exit_with_login_message(console)
 
         # Create the client object and get the posts.
         write_client = WriteFreely(
             current_config.instance,
             current_config.access_token,
             collection=sys.argv[2])
-        write_client.check_collection()
+        if not write_client.check_collection():
+            sys.exit(1)
         write_client.get_posts()
 
     elif len(sys.argv) < 3 and "get" in sys.argv:
-        print("Must specify a collection with 'get'. Please include the collection name.")
+        console.print("Must specify a collection with [bold purple]get[/bold purple]. Please include the collection name.")
     elif len(sys.argv) >= 3 and "delete" in sys.argv:
         current_config = ConfigObj()
-        current_config.load()
+        if not current_config.load():
+            exit_with_login_message(console)
 
         # Create the client and attempt to delete the post.
         write_client = WriteFreely(
@@ -156,10 +176,9 @@ def main():
             current_config.access_token)
         write_client.delete_post(sys.argv[2])
     elif len(sys.argv) < 3 and "delete" in sys.argv:
-        print("Must specify a post ID with 'delete'. Run \"writepyly help delete\" for more details.")
+        console.print("Must specify a post ID with 'delete'. Run [bold]\"writepyly help delete\"[/bold] for more details.", style="red")
     else:
-        print("Entered arguments don't match known values. Run \"writepyly help\" for instructions.")
+        console.print("Entered arguments don't match known values. Run [bold]\"writepyly help\"[/bold] for instructions.", style="red")
 
 if __name__ == "__main__":
     main()
-

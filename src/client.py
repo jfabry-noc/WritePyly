@@ -1,6 +1,8 @@
 import requests
 import sys
 
+from rich.console import Console
+
 
 class WriteFreely:
     def __init__(self, instance: str, access_token: str, **kwargs):
@@ -8,11 +10,15 @@ class WriteFreely:
         self.access_token = access_token
         if kwargs.get("collection"):
             self.collection = kwargs.get("collection")
+        self.console = Console()
 
-    def check_collection(self):
+    def check_collection(self) -> bool:
         """
         Checks for the presence of a collection to assert that a specified
         collection is valid.
+
+        Returns:
+            bool: Indicates if the client exists (`True`) or not (`False`)
         """
         if self.collection:
             try:
@@ -24,13 +30,17 @@ class WriteFreely:
                         "Authorization": f"Token {self.access_token}"})
 
                 if collection_response.status_code != 200:
-                    print(f"Error: Specified collection of {self.collection} is not valid!")
-                    print(f"Are you sure you have the correct name for your collection?")
-                    sys.exit(1)
+                    self.console.print(f"Error: Specified collection of {self.collection} is not valid!", style="bold red")
+                    self.console.print(f"Are you sure you have the correct name for your collection?")
+                    return False
             except Exception as e:
-                print(f"Error attempting to check validity of collection: {self.collection}")
-                print(f"Error was: {e}")
-                sys.exit(1)
+                self.console.print(f"Error attempting to check validity of collection: {self.collection}", style="bold red")
+                self.console.print(f"Error was: {e}", style="bold red")
+                return False
+
+            return True
+        else:
+            return False
 
     def get_posts(self):
         """
@@ -51,7 +61,7 @@ class WriteFreely:
                 "Authorization": f"Token: {self.access_token}"
                 })
         except Exception as e:
-            print(f"Failed to retrieve posts with error: {e}")
+            self.console.print(f"Failed to retrieve posts with error: {e}", style="bold red")
             sys.exit(1)
 
         # Process the results.
@@ -74,14 +84,17 @@ class WriteFreely:
         # Process how to render them.
         for single_post in sorted_posts:
             # Print the current post to STDOUT.
-            print(f"Title:   {single_post.get('title')}")
-            print(f"Created: {single_post.get('created')}")
-            print(f"ID:      {single_post.get('id')}\n")
+            self.console.print(f"[bold purple]Title:[/bold purple]   [white]{single_post.get('title')}[/white]")
+            self.console.print(f"[bold purple]Created:[/bold purple] [white]{single_post.get('created')}[/white]")
+            self.console.print(f"[bold purple]ID:[/bold purple]      [white]{single_post.get('id')}[/white]\n")
 
     def delete_post(self, post_id: str):
         """
         Deletes a post via the post ID. Most commonly retrieved from running the
         'get' command.
+
+        Args:
+            post_id (str): ID of the post to remove.
         """
         delete_url = f"https://{self.instance}/api/posts/{post_id}"
         try:
@@ -94,10 +107,10 @@ class WriteFreely:
 
             # Validate the deletion was successful.
             if deletion_response.status_code == 204:
-                print(f"Successfully deleted post: {post_id}")
+                self.console.print(f"Successfully deleted post: [bold purple]{post_id}[/bold purple]")
             else:
-                print(f"Failed to delete post {post_id} with status code: {deletion_response.status_code}")
+                self.console.print(f"Failed to delete post {post_id} with status code: {deletion_response.status_code}", style="bold red")
         except Exception as e:
-            print(f"Failed to delete post with ID: {post_id}")
-            print(f"Error was: {e}")
+            self.console.print(f"Failed to delete post with ID: {post_id}", style="bold red")
+            self.console.print(f"Error was: {e}", style="bold red")
             sys.exit(1)

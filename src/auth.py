@@ -7,12 +7,19 @@ from config import ConfigObj
 
 
 class Authenticator():
-    def supply_credentials(self, instance_name: str, user_name: str, password: str):
+    def supply_credentials(self, instance_name: str, user_name: str, password: str) -> None:
         self.instance_name = instance_name
         self.user_name = user_name
         self.password = password
 
-    def remove_login(self, instance_name: str, access_token: str):
+    def remove_login(self, instance_name: str, access_token: str) -> None:
+        """
+        Invalidates an existing access token and removes the JSON file storing it.
+
+        Args:
+            instance_name (str): Name of the instance associated with the token.
+            access_token (str): Value of the access token to invalidate.
+        """
         # Invalidate the existing token.
         logout_url = f"https://{instance_name}/api/auth/me"
         print(f"Using logout URL: {logout_url}")
