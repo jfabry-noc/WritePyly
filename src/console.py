@@ -1,7 +1,9 @@
+import getpass
 import sys
 
 from rich.console import Console
 
+from auth import Authenticator
 from config import ConfigObj
 from client import WriteFreely
 
@@ -15,21 +17,12 @@ class WriteConsole:
         self.collection = ""
         self.print_greeting()
 
-    def enter_to_continue(self) -> None:
-        """
-        Prompts the user to hit 'Enter' to continue so as to draw their attention
-        to what was written to the screen prior to repeating the menu.
-        """
-        self.console.print("Hit [bold purple]Enter[/bold purple] to continue...")
-        input("> ")
-
     def print_missing_config(self) -> None:
         """
         Prints a notice that the configuration is missing and prompts the user
         to attempt to run the 'login' command.
         """
-        self.console.print("Try running [bold purple]login[/bold]")
-        self.enter_to_continue()
+        self.console.print("Try running [bold purple]login[/bold purple]")
 
     def process_menu_input(self, user_input: str, max_value: int):
         """
@@ -67,7 +60,6 @@ class WriteConsole:
         """
         if self.collection == "":
             self.console.print("No [bold purple]collection[/bold purple] has been specified! Use option 3 first!")
-            self.enter_to_continue()
             return False
         else:
             return True
@@ -97,7 +89,6 @@ class WriteConsole:
                 # Ensure the passed collection was valid.
                 if not self.client.check_collection():
                     self.console.print("Invalid collection! Specify a new one with option 3.", style="bold red")
-                    self.enter_to_continue()
                     return False
         return True
 
@@ -106,6 +97,19 @@ class WriteConsole:
         Authenticates the user, either creating or overwriting the local
         configuration file.
         """
+        auth_obj = Authenticator()
+        self.console.print("Enter your instance name.")
+        instance = input("> ")
+        self.console.print("Enter your username.")
+        username = input("> ")
+        self.console.print("Enter your password.")
+        password = getpass.getpass("> ")
+        auth_obj.supply_credentials(
+            instance_name=instance,
+            user_name=username,
+            password=password
+        )
+        auth_obj.new_login(write_stdout=False)
 
     def print_greeting(self):
         """
@@ -144,6 +148,7 @@ class WriteConsole:
                 # Call whatever method is required by the user's selection.
                 if int_value == 1:
                     # Initiate a new login.
+                    self.authenticate()
                     pass
                 elif int_value == 2:
                     # Logout from the current session.
@@ -153,7 +158,6 @@ class WriteConsole:
                     self.console.print("Enter the name of the current [bold purple]collection[/bold purple]:")
                     self.collection = input("> ")
                     self.console.print(f"Saved collection of: [bold purple]{self.collection}[/bold purple]")
-                    self.enter_to_continue()
                 elif int_value == 4:
                     # Create a new post.
                     pass
@@ -165,10 +169,9 @@ class WriteConsole:
                             self.client.get_posts()
                         else:
                             self.console.print("We should never get here! Try logging in again...")
-                        self.enter_to_continue()
                 elif int_value == 6:
                     # Delete a post. Maybe call the 10 most recent automatically?
                     pass
                 elif int_value == 7:
-                    self.console.print("[bold purple]Goodbye!")
+                    self.console.print("[bold purple]Goodbye![/bold purple]")
                     sys.exit(0)
