@@ -88,7 +88,7 @@ class WriteFreely:
             self.console.print(f"[bold purple]Created:[/bold purple] [white]{single_post.get('created')}[/white]")
             self.console.print(f"[bold purple]ID:[/bold purple]      [white]{single_post.get('id')}[/white]\n")
 
-    def delete_post(self, post_id: str):
+    def delete_post(self, post_id: str, exit_on_fail=True):
         """
         Deletes a post via the post ID. Most commonly retrieved from running the
         'get' command.
@@ -113,4 +113,5 @@ class WriteFreely:
         except Exception as e:
             self.console.print(f"Failed to delete post with ID: {post_id}", style="bold red")
             self.console.print(f"Error was: {e}", style="bold red")
-            sys.exit(1)
+            if exit_on_fail:
+                sys.exit(1)

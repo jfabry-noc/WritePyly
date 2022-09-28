@@ -78,7 +78,7 @@ class Authenticator():
                         self.console.print(f"[bold red]ERROR:[/bold red] Server response was 200 but no access token was provided.")
                         print(f"Full body was:\nf{auth_response.json()}")
             else:
-                self.console.print(f"[bold red]Unsuccessful authentication with response code: {auth_response.status_code}[/bold red]")
+                self.console.print(f"Unsuccessful authentication with response code: {auth_response.status_code}", style="bold red")
                 if write_stdout:
                     sys.exit(1)
         except Exception as e:

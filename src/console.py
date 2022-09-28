@@ -1,4 +1,6 @@
 import getpass
+import json
+import os
 import sys
 
 from rich.console import Console
@@ -6,6 +8,8 @@ from rich.console import Console
 from auth import Authenticator
 from config import ConfigObj
 from client import WriteFreely
+
+from __init__ import JSON_PATH
 
 
 class WriteConsole:
@@ -92,7 +96,7 @@ class WriteConsole:
                     return False
         return True
 
-    def authenticate(self):
+    def authenticate(self) -> None:
         """
         Authenticates the user, either creating or overwriting the local
         configuration file.
@@ -110,6 +114,33 @@ class WriteConsole:
             password=password
         )
         auth_obj.new_login(write_stdout=False)
+
+    def deauthenticate(self) -> None:
+        """
+        Invalidates any authentication token which may be found and removes the local config file.
+        """
+        if os.path.isfile(JSON_PATH):
+            current_config = dict()
+            try:
+                with open(JSON_PATH, "r") as config_file:
+                    current_config = json.load(config_file)
+            except Exception as e:
+                self.console.print(f"ERROR: Unable to read {JSON_PATH} with error: {e}", style="bold red")
+
+            if current_config != {} and current_config.get('instance') and current_config.get('access_token'):
+                auth_obj = Authenticator()
+                try:
+                    auth_obj.remove_login(
+                        current_config['instance'],
+                        current_config['access_token'])
+                except KeyError as e:
+                    self.console.print("Missing either the instance or access token to log out. Does the config file still exist at: ~/config/writepyly/config.json", style="bold red")
+                    sys.exit(1)
+                except Exception as e:
+                    self.console.print(f"Failed to logout with error: {e}", style="bold red")
+                    sys.exit(1)
+        else:
+            self.console.print(f"No config file found at: {JSON_PATH}")
 
     def print_greeting(self):
         """
@@ -149,10 +180,9 @@ class WriteConsole:
                 if int_value == 1:
                     # Initiate a new login.
                     self.authenticate()
-                    pass
                 elif int_value == 2:
-                    # Logout from the current session.
-                    pass
+                    # Logout from the current session and remove the configuration.
+                    self.deauthenticate()
                 elif int_value == 3:
                     # Define the collection.
                     self.console.print("Enter the name of the current [bold purple]collection[/bold purple]:")
@@ -170,8 +200,10 @@ class WriteConsole:
                         else:
                             self.console.print("We should never get here! Try logging in again...")
                 elif int_value == 6:
-                    # Delete a post. Maybe call the 10 most recent automatically?
-                    pass
+                    # Delete a post.
+                    if self.check_client():
+                        self.console.print("Enter the post ID to remove.")
+                        self.client.delete_post(input("> "), exit_on_fail=False)
                 elif int_value == 7:
                     self.console.print("[bold purple]Goodbye![/bold purple]")
                     sys.exit(0)
