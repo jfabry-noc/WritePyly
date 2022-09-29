@@ -1,15 +1,19 @@
 import getpass
 import json
 import os
+import subprocess
 import sys
+import time
+import uuid
 
 from rich.console import Console
 
 from auth import Authenticator
 from config import ConfigObj
 from client import WriteFreely
+from post import Post
 
-from __init__ import JSON_PATH
+from __init__ import JSON_PATH, TEMP_BASE
 
 
 class WriteConsole:
@@ -142,6 +146,54 @@ class WriteConsole:
         else:
             self.console.print(f"No config file found at: {JSON_PATH}")
 
+    def new_post(self, file_name: str) -> None:
+        """
+        Creates a new post. This method requires the $EDITOR environment
+        variable to be set. If it is, then it will automatically open with
+        a new temporary file. Once the file is saved, it will be ingested and
+        posted. Once the post has been completed, the file is removed.
+
+        Args:
+            file_name (str): The name of the temporary file.
+        """
+        # Launch a sub-process with the user's editor of choice.
+        temp_file = f"{TEMP_BASE}/{file_name}"
+        editor_result = subprocess.run([os.environ.get("EDITOR"), temp_file])
+        
+        # Make sure the editor exited cleanly.
+        if editor_result.returncode != 0:
+            self.console.print(f"Aborting. Editor exited with code: {editor_result.returncode}", style="bold red")
+
+        # Create the post.
+        with open(temp_file, "r") as file:
+            post_content = file.read()
+
+        # Check if a title was specified.
+        post_content_list = post_content.split('\n')
+        post_title = None
+        if post_content_list[0].startswith('#'):
+            post_title = post_content_list[0].replace("#", "").strip()
+            post_content_list.remove(post_content_list[0])
+            post_content = '\n'.join(post_content_list)
+
+        # Create a post object and validate the collection if one was provided.
+        current_post = Post(
+            post_content,
+            self.current_config.instance,
+            self.current_config.access_token,
+            collection=self.collection,
+            title=post_title)
+
+        # Make the post.
+        post_id = current_post.create_post()
+        self.console.print(f"Successfully created post with ID: [bold purple]{post_id}[/bold purple]")
+
+        # Delete the file.
+        try:
+            os.remove(temp_file)
+        except Exception as e:
+            self.console.print("Failed to remove file '{temp_file}' with error: {e}", style="bold red")
+
     def print_greeting(self):
         """
         Prints a basic greeting to the user.
@@ -189,8 +241,18 @@ class WriteConsole:
                     self.collection = input("> ")
                     self.console.print(f"Saved collection of: [bold purple]{self.collection}[/bold purple]")
                 elif int_value == 4:
-                    # Create a new post.
-                    pass
+                    # Ensure we have a collection and client.
+                    if self.check_collection() and self.check_client():
+                        # Create a new post.
+                        if not os.environ.get("EDITOR"):
+                            self.console.print("No [bold red]EDITOR[/bold red] found. Be sure this environment variable is set for Unix goodness!")
+                        elif not os.path.isdir(TEMP_BASE):
+                            self.console.print(f"Temp directory of {TEMP_BASE} doesn't exist!")
+                        else:
+                            file_name = f"writepyly_{str(uuid.uuid4())}.md"
+                            self.console.print(f"Launching your editor with temporary file: [bold purple]{file_name}[/bold purple]")
+                            time.sleep(2)
+                            self.new_post(file_name)
                 elif int_value == 5:
                     # Show the 10 most recent posts.
                     # Check that there's a collection.
@@ -201,7 +263,7 @@ class WriteConsole:
                             self.console.print("We should never get here! Try logging in again...")
                 elif int_value == 6:
                     # Delete a post.
-                    if self.check_client():
+                    if self.check_collection() and self.check_client():
                         self.console.print("Enter the post ID to remove.")
                         self.client.delete_post(input("> "), exit_on_fail=False)
                 elif int_value == 7:
