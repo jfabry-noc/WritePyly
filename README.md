@@ -14,32 +14,23 @@ Since this is still an early work in progress, all of this is subject to change 
 git clone https://gitlab.com/loopednetwork/writepyly.git
 ````
 
-Once in the project directory from the CLI, create a virtual environment, activate it, and the install the dependencies:
+Once in the project directory from the CLI, just run the setup script:
 
 ```shell
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -U pip setuptools wheel
-python3 -m pip install -r requirements.txt
+./setup.sh
 ```
+
+This only works with POSIX systems. If you happen to be running this on Windows, there are assumptions made in the code which mean it probably won't work even if you get the setup deployed. I don't have a Windows system to test with.
 
 ## Usage
 
-All of this is also subject to change since the long-term goal is to make this a package that can be distributed via [PyPI](https://pypi.org/). If you want to play with it prior to it being mature enough for that, though, the following should work. The entrypoint can be accessed by calling `__main__.py` directly:
+If you've run `setup.sh`, you should have a `writepyly` executable available on your `PATH`. This can be validated by running:
 
 ```shell
-./src/__main__.py {commands}
+which writepyly
 ```
 
-Anything in the `help` option should have `writepyly` replaced with `__main__.py` until it's actually bundled as a package for PyPI.
-
-To get out of the virtual environment, run:
-
-```shell
-deactivate
-```
-
-## Usage
+If you get output (which should be `/usr/local/bin/writepyly`), then everything is set. If there's no output, then something has gone wrong.
 
 The main options offered currently are:
 
@@ -154,15 +145,16 @@ writepyly delete {post_id}
 
 To easily retrieve a post ID, use the `get` command.
 
-## Roadmap
+## TUI
 
-Simply rounding out and making the above functionality more robust is the first step on the roadmap. Once that's complete, it'll be up for consideration to make a package for distribution.
+In addition to the CLI client described above, there is also a TUI client available by simply running `writepyly` with no arguments. This will drop you into an interactive mode. The first thing you'll be prompted for is the collection to use, though this can be changed later.
 
-After the CLI functionality has been fully fleshed out, I would like to look at making an entrypoint into a TUI using something like [rich](https://github.com/Textualize/rich) so the UI looks better. Along with post management, I'd like to at least attempt creating a post editor that could be used for:
+The options for the TUI client are clearly laid out in the menu which is displayed. They mirror the functionality of the CLI version. The only thing worth mentioning is that creating a new post will require the `$EDITOR` environment variable to be set so that `writepyly` knows what to use for creating the content. If that isn't set, you'll be notified about it. It can easily be set by adding something like the following to your `~/.profile`, `~/.zshrc`, etc. file, depending on what your `$SHELL` is:
 
-1. Creating new posts
-2. Editing existing posts
+```shell
+export EDITOR="/usr/bin/vim"
+```
 
 ## Project status
 
-This project is currently super early on. I just work on it when I have time. 💜
+This project is more or less wrapped up since it currently meets my needs. If I think of other features or if someone requests something additional, though, I'll certainly be willing to look at adding it. 💜
