@@ -3,7 +3,7 @@
 python_path=$(which python3)
 venv_base="$(pwd)/.venv"
 local_python_path="$venv_base/bin/python3"
-main_path="$pwd/src/__main__.py \$@"
+main_path="$(pwd)/src/__main__.py \$@"
 
 # Validate that Python is installed.
 if [ ! $python_path ]; then
@@ -14,7 +14,7 @@ fi
 # Try to create the virtual environment if it doesn't already exist.
 echo "Creating the virtual environment..."
 if [ -d "$venv_base" ]; then
-	echo ".venv already exists in this directory! Delete it to continue."
+	echo ".venv already exists in this directory! Delete it to continue, e.g.: rm -rf .venv/"
 	exit 1
 fi
 python3 -m venv .venv
@@ -26,11 +26,11 @@ echo "Python is here: $(which python3)"
 
 # Update pip and setuptools.
 echo "Ensuring pip is updated..."
-python3 -m pip install -U pip setuptools
+python3 -m pip install -U pip setuptools > /dev/null
 
 # Install requests.
 echo "Installing required packages..."
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt > /dev/null
 
 # Drop from the virtual environment.
 echo "Getting out of the virtual environment."
@@ -38,13 +38,9 @@ deactivate
 
 # Create the writepyly script in a $PATH location.
 echo "Adding a 'writepyly' executable at: /usr/local/bin/writepyly"
-echo "Note: You'll may be prompted for the root password to write here!"
+echo "Note: You may be prompted for the root/sudo password to write here!"
 echo "#!/usr/bin/env bash" | sudo tee /usr/local/bin/writepyly
-sudo touch /usr/local/bin/writepyly
-sudo cat >/usr/local/bin/writepyly <<EOF
-#!/usr/bin/env bash
-$local_python_path $main_path
-EOF
-sudo chmod +x writepyly
+echo "$local_python_path $main_path" | sudo tee -a /usr/local/bin/writepyly
+sudo chmod +x /usr/local/bin/writepyly
 
 echo "Setup complete!"
