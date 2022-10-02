@@ -23,7 +23,7 @@ if [ -d "$venv_base" ]; then
 	echo ".venv already exists in this directory! Delete it to continue, e.g.: rm -rf .venv/"
 	exit 1
 fi
-python3 -m venv .venv
+python3 -m venv .venv > /dev/null
 
 # Switch to the context of the virtual environment. 
 echo "Switching to the context of the virtual environment."
