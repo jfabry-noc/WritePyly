@@ -11,6 +11,12 @@ if [ ! $python_path ]; then
 	exit 1
 fi
 
+# Check if $EDITOR is set.
+if [[ -z "$EDITOR" ]]; then
+	echo "EDITOR environment variable not found."
+	echo "Add this to your shell configuration if you wish to create posts from the TUI."
+fi
+
 # Try to create the virtual environment if it doesn't already exist.
 echo "Creating the virtual environment..."
 if [ -d "$venv_base" ]; then
