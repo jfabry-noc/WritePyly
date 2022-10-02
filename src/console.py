@@ -67,10 +67,19 @@ class WriteConsole:
             bool: Indicating if there is a collection specified.
         """
         if self.collection == "":
-            self.console.print("No [bold purple]collection[/bold purple] has been specified! Use option 3 first!")
+            self.console.print("No [bold purple]collection[/bold purple] has been specified!")
             return False
         else:
             return True
+
+    def get_collection(self) -> None:
+        """
+        Gets the desired collection from the user.
+        """
+        # Define the collection.
+        self.console.print("Enter the name of the current [bold purple]collection[/bold purple]:")
+        self.collection = input("> ")
+        self.console.print(f"Saved collection of: [bold purple]{self.collection}[/bold purple]")
 
     def check_client(self) -> bool:
         """
@@ -158,41 +167,62 @@ class WriteConsole:
         """
         # Launch a sub-process with the user's editor of choice.
         temp_file = f"{TEMP_BASE}/{file_name}"
-        editor_result = subprocess.run([os.environ.get("EDITOR"), temp_file])
-        
-        # Make sure the editor exited cleanly.
-        if editor_result.returncode != 0:
-            self.console.print(f"Aborting. Editor exited with code: {editor_result.returncode}", style="bold red")
+        # Safe since EDITOR is checked prior to getting here.
+        while True:
+            editor_result = subprocess.run([os.environ["EDITOR"], temp_file])
+            
+            # Make sure the editor exited cleanly.
+            if editor_result.returncode != 0:
+                self.console.print(f"Aborting. Editor exited with code: {editor_result.returncode}", style="bold red")
+                return
+
+            # Validate the user still wants to make this post.
+            self.console.print("Do you want to publish this post?")
+            self.console.print("1. Publish")
+            self.console.print("2. Edit")
+            self.console.print("3. Discard")
+            selection = input("> ")
+
+            if selection == "1" or selection == "3":
+                break
+            elif selection == "2":
+                continue
+            else:
+                self.console.print("Invalid selection!", style="bold red")
+
 
         # Create the post.
-        with open(temp_file, "r") as file:
-            post_content = file.read()
+        if selection == "1":
+            self.console.print("Creating the post...")
+            with open(temp_file, "r") as file:
+                post_content = file.read()
 
-        # Check if a title was specified.
-        post_content_list = post_content.split('\n')
-        post_title = None
-        if post_content_list[0].startswith('#'):
-            post_title = post_content_list[0].replace("#", "").strip()
-            post_content_list.remove(post_content_list[0])
-            post_content = '\n'.join(post_content_list)
+            # Check if a title was specified.
+            post_content_list = post_content.split('\n')
+            post_title = None
+            if post_content_list[0].startswith('#'):
+                post_title = post_content_list[0].replace("#", "").strip()
+                post_content_list.remove(post_content_list[0])
+                post_content = '\n'.join(post_content_list)
 
-        # Create a post object and validate the collection if one was provided.
-        current_post = Post(
-            post_content,
-            self.current_config.instance,
-            self.current_config.access_token,
-            collection=self.collection,
-            title=post_title)
+            # Create a post object and validate the collection if one was provided.
+            current_post = Post(
+                post_content,
+                self.current_config.instance,
+                self.current_config.access_token,
+                collection=self.collection,
+                title=post_title)
 
-        # Make the post.
-        post_id = current_post.create_post()
-        self.console.print(f"Successfully created post with ID: [bold purple]{post_id}[/bold purple]")
+            # Make the post.
+            post_id = current_post.create_post()
+            self.console.print(f"Successfully created post with ID: [bold purple]{post_id}[/bold purple]")
 
         # Delete the file.
+        self.console.print(f"Deleting {temp_file}")
         try:
             os.remove(temp_file)
         except Exception as e:
-            self.console.print("Failed to remove file '{temp_file}' with error: {e}", style="bold red")
+            self.console.print(f"Failed to remove file '{temp_file}' with error: {e}", style="bold red")
 
     def print_greeting(self):
         """
@@ -216,6 +246,10 @@ class WriteConsole:
             "Delete a post",
             "Quit"]
         while True:
+            # Check if there's a collection and get one first if not.
+            if self.collection == "":
+                self.get_collection()
+
             counter = 0
             for option in options:
                 counter += 1
@@ -237,9 +271,7 @@ class WriteConsole:
                     self.deauthenticate()
                 elif int_value == 3:
                     # Define the collection.
-                    self.console.print("Enter the name of the current [bold purple]collection[/bold purple]:")
-                    self.collection = input("> ")
-                    self.console.print(f"Saved collection of: [bold purple]{self.collection}[/bold purple]")
+                    self.get_collection()
                 elif int_value == 4:
                     # Ensure we have a collection and client.
                     if self.check_collection() and self.check_client():
@@ -265,7 +297,11 @@ class WriteConsole:
                     # Delete a post.
                     if self.check_collection() and self.check_client():
                         self.console.print("Enter the post ID to remove.")
-                        self.client.delete_post(input("> "), exit_on_fail=False)
+                        if self.client is not None:
+                            self.client.delete_post(input("> "), exit_on_fail=False)
+                        else:
+                            # Should never reach but it makes pyright happy.
+                            self.console.print("Unable to delete the post as the client still doesn't exist!", style="bold red")
                 elif int_value == 7:
                     self.console.print("[bold purple]Goodbye![/bold purple]")
                     sys.exit(0)
